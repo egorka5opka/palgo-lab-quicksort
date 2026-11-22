@@ -46,30 +46,36 @@ int main(int argc, char** argv) {
     std::sort(expected.begin(), expected.end());
 
     const auto workers = parlay::num_workers();
+    const Sort std_sort = [](std::vector<int>& values) {
+        std::sort(values.begin(), values.end());
+    };
     //warm up
     measure(lab::sequential_sort, input, expected);
     measure(lab::parallel_sort, input, expected);
+    measure(std_sort, input, expected);
 
-    double sequential_ms = 0;
-    double parallel_ms = 0;
+    const Sort sorts[] = {lab::sequential_sort, lab::parallel_sort, std_sort};
+    double times_ms[] = {0, 0, 0};
     for (std::size_t i = 0; i < repetitions; ++i) {
-        // Alternate order to reduce systematic measurement bias.
-        if (i % 2 == 0) {
-            sequential_ms += measure(lab::sequential_sort, input, expected);
-            parallel_ms += measure(lab::parallel_sort, input, expected);
-        } else {
-            parallel_ms += measure(lab::parallel_sort, input, expected);
-            sequential_ms += measure(lab::sequential_sort, input, expected);
+        // Rotate all three algorithms to reduce measurement order bias.
+        for (std::size_t j = 0; j < 3; ++j) {
+            const auto index = (i + j) % 3;
+            times_ms[index] += measure(sorts[index], input, expected);
         }
     }
-    sequential_ms /= repetitions;
-    parallel_ms /= repetitions;
+    const double sequential_ms = times_ms[0] / repetitions;
+    const double parallel_ms = times_ms[1] / repetitions;
+    const double std_sort_ms = times_ms[2] / repetitions;
     std::cout << "size=" << size << ", repetitions=" << repetitions
                 << ", workers=" << workers << '\n'
                 << std::fixed << std::setprecision(3)
                 << "sequential mean: " << sequential_ms << " ms\n"
-                << "parallel mean:   " << parallel_ms << " ms\n";
+                << "parallel mean:   " << parallel_ms << " ms\n"
+                << "std::sort mean:  " << std_sort_ms << " ms\n";
     if (parallel_ms > 0) {
-        std::cout << "speedup: " << sequential_ms / parallel_ms << "x\n";
+        std::cout << "parallel speedup vs sequential: "
+                  << sequential_ms / parallel_ms << "x\n"
+                  << "parallel speedup vs std::sort:  "
+                  << std_sort_ms / parallel_ms << "x\n";
     }
 }
