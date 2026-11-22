@@ -6,7 +6,7 @@
 
 namespace lab {
 
-static std::mt19937_64 rnd(123);
+static thread_local std::mt19937_64 rnd(123);
 
 void qsort_seq(std::vector<int>& a, size_t l, size_t r) {
     if (r - l <= 1) {
@@ -37,6 +37,7 @@ void sequential_sort(std::vector<int>& values) {
 
 void qsort_par(std::vector<int>& a, size_t l, size_t r) {
     if (r - l <= 1) {
+        qsort_seq(a, l, r);
         return;
     }
     int pivot = a[rnd() % (r - l) + l];
