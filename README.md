@@ -35,3 +35,12 @@ parallel speedup vs sequential: 3.369x
 parallel speedup vs std::sort:  2.594x
 ```
 
+upd: оставил на ночь побольше повторений
+```
+size=100000000, repetitions=100, workers=4
+sequential mean: 15922.621 ms
+parallel mean:   5150.643 ms
+std::sort mean:  12629.797 ms
+parallel speedup vs sequential: 3.091x
+parallel speedup vs std::sort:  2.452x
+```
